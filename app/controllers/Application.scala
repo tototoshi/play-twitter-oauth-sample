@@ -6,7 +6,6 @@ import play.api.libs.oauth._
 
 object Application extends Controller {
 
-
   private val twitterServiceInfo = {
     val twitterRequestTokenURL = "https://api.twitter.com/oauth/request_token"
     val twitterAccessTokenURL = "https://api.twitter.com/oauth/access_token"
@@ -34,7 +33,8 @@ object Application extends Controller {
     request.session.get("id") match {
       case Some(_) => Ok(views.html.index("Your new application is ready."))
       case None => oauth.retrieveRequestToken(oauthCallbackURL) match {
-        case Right(token) => Ok(token.toString)
+        case Right(token) =>
+          Redirect(oauth.redirectUrl(token.token))
         case Left(e) => {
           InternalServerError(e.getMessage)
         }
