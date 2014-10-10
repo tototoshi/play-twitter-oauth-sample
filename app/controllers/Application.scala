@@ -2,6 +2,8 @@ package controllers
 
 import play.api._
 import play.api.mvc._
+import play.api.data.Form
+import play.api.data.Forms._
 import play.api.libs.oauth._
 import _root_.libs.{ Jade, Twitter, TwitterUser }
 
@@ -67,23 +69,39 @@ object Application extends Controller {
     }
   }
 
-  def authorize(oauthToken: String, oauthVerifier: String) =
-    Action { implicit request =>
-      request.session.get("twitter.requestTokenSecret") match {
-        case Some(tokenSecret) =>
-          val requestToken = RequestToken(oauthToken, tokenSecret)
-          oauth.retrieveAccessToken(requestToken, oauthVerifier) match {
-            case Right(token) =>
-              Redirect(routes.Application.index).withSession(
-                "id" -> token.token,
-                "secret" -> token.secret
-              )
-            case Left(e) =>
-              BadRequest
-          }
-        case None => BadRequest
-      }
-    }
+  def authorize = Action { implicit request =>
+    val form = Form(
+      tuple(
+        "oauth_token" -> optional(nonEmptyText),
+        "oauth_verifier" -> optional(nonEmptyText),
+        "denied" -> optional(nonEmptyText)
+      )
+    )
+
+    form.bindFromRequest.fold({
+      formWithError => BadRequest
+    }, {
+      case (Some(oauthToken), Some(oauthVerifier), None) =>
+        (for {
+          tokenSecret <- request.session.get("twitter.requestTokenSecret")
+          requestToken = RequestToken(oauthToken, tokenSecret)
+          token <- oauth.retrieveAccessToken(
+            requestToken, oauthVerifier
+          ).right.toOption
+        } yield {
+          Redirect(routes.Application.index).withSession(
+            "id" -> token.token,
+            "secret" -> token.secret
+          )
+        }).getOrElse(BadRequest)
+      case (None, None, Some(denied)) => Redirect(routes.Application.index)
+      case _ => BadRequest
+    })
+  }
+
+  def denied(denied: String) = Action { implicit request =>
+    Redirect(routes.Application.index)
+  }
 
   def logout = Action { implicit request =>
     Redirect(routes.Application.index).withNewSession

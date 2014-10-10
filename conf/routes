@@ -4,7 +4,7 @@
 
 # Home page
 GET     /                           controllers.Application.index
-GET     /authorize                  controllers.Application.authorize(oauth_token: String, oauth_verifier: String)
+GET     /authorize                  controllers.Application.authorize
 GET     /logout                     controllers.Application.logout
 GET     /login                      controllers.Application.login
 
