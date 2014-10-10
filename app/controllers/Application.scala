@@ -24,10 +24,22 @@ object Application extends Controller {
     )
   }
 
+  private val oauthCallbackURL = Play.current.configuration.getString(
+    "twitter.callbackURL"
+  ).get
+
   private val oauth = OAuth(twitterServiceInfo, use10a = true)
 
-  def index = Action {
-    Ok(views.html.index("Your new application is ready."))
+  def index = Action { implicit request =>
+    request.session.get("id") match {
+      case Some(_) => Ok(views.html.index("Your new application is ready."))
+      case None => oauth.retrieveRequestToken(oauthCallbackURL) match {
+        case Right(token) => Ok(token.toString)
+        case Left(e) => {
+          InternalServerError(e.getMessage)
+        }
+      }
+    }
   }
 
 }
