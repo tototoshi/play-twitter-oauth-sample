@@ -32,7 +32,16 @@ object Application extends Controller {
 
   def index = Action { implicit request =>
     request.session.get("id") match {
-      case Some(_) => Ok(Jade.render("index.jade"))
+      case Some(id) =>
+        Ok(Jade.render("index.jade", Map("isLoggedIn" -> true, "id" -> Some(id))))
+      case None =>
+        Ok(Jade.render("index.jade", Map("isLoggedIn" -> false, "id" -> None)))
+    }
+  }
+
+  def login = Action { implicit request =>
+    request.session.get("id") match {
+      case Some(_) => Redirect(routes.Application.index)
       case None => oauth.retrieveRequestToken(oauthCallbackURL) match {
         case Right(token) =>
           Redirect(oauth.redirectUrl(token.token)).withSession(
@@ -65,7 +74,7 @@ object Application extends Controller {
     }
 
   def logout = Action { implicit request =>
-    Ok(Jade.render("logout.jade")).withNewSession
+    Redirect(routes.Application.index).withNewSession
   }
 
 }

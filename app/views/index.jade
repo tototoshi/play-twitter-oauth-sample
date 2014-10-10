@@ -1,5 +1,18 @@
+-@ val id: Option[String]
+-@ val isLoggedIn: Boolean
+
 !!! 5
 html
   head
   body
-    p Hello
+    p
+      -if (isLoggedIn)
+        a(href="/logout") logout
+        p you are logged in
+      -else
+        a(href="/login") login
+        p you are not logged in
+
+    p
+      -if (isLoggedIn)
+      span id = #{id}
