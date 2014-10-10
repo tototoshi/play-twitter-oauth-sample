@@ -40,25 +40,16 @@ object Application extends Controller {
     }
 
   def index = Action { implicit request =>
-    getAuthUser(request) match {
-      case Some(user) =>
-        Ok(
-          Jade.render("index.jade",
-            Map("isLoggedIn" -> true,
-              "screenName" -> Some(user.screenName)
-            )
-          )
+    val user = getAuthUser(request)
+    Ok(
+      Jade.render(
+        "index.jade",
+        Map(
+          "isLoggedIn" -> user.isDefined,
+          "screenName" -> user.map(_.screenName)
         )
-      case None =>
-        Ok(
-          Jade.render("index.jade",
-            Map(
-              "isLoggedIn" -> false,
-              "screenName" -> None
-            )
-          )
-        )
-    }
+      )
+    )
   }
 
   def login = Action { implicit request =>
