@@ -64,4 +64,8 @@ object Application extends Controller {
       }
     }
 
+  def logout = Action { implicit request =>
+    Ok(Jade.render("logout.jade")).withNewSession
+  }
+
 }
