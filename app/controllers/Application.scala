@@ -3,6 +3,7 @@ package controllers
 import play.api._
 import play.api.mvc._
 import play.api.libs.oauth._
+import _root_.libs.Jade
 
 object Application extends Controller {
 
@@ -31,7 +32,7 @@ object Application extends Controller {
 
   def index = Action { implicit request =>
     request.session.get("id") match {
-      case Some(_) => Ok(views.html.index("Your new application is ready."))
+      case Some(_) => Ok(Jade.render("index.jade"))
       case None => oauth.retrieveRequestToken(oauthCallbackURL) match {
         case Right(token) =>
           Redirect(oauth.redirectUrl(token.token)).withSession(

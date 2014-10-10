@@ -10,5 +10,6 @@ libraryDependencies ++= Seq(
   jdbc,
   anorm,
   cache,
-  ws
+  ws,
+  "org.scalatra.scalate" %% "scalate-core" % "1.7.0"
 )
