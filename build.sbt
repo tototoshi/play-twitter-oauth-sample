@@ -11,5 +11,6 @@ libraryDependencies ++= Seq(
   anorm,
   cache,
   ws,
-  "org.scalatra.scalate" %% "scalate-core" % "1.7.0"
+  "org.scalatra.scalate" %% "scalate-core" % "1.7.0",
+  "org.twitter4j" % "twitter4j-core" % "4.0.2"
 )

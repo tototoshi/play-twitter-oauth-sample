@@ -3,7 +3,7 @@ package controllers
 import play.api._
 import play.api.mvc._
 import play.api.libs.oauth._
-import _root_.libs.Jade
+import _root_.libs.{ Jade, Twitter, TwitterUser }
 
 object Application extends Controller {
 
@@ -30,17 +30,39 @@ object Application extends Controller {
 
   private val oauth = OAuth(twitterServiceInfo, use10a = true)
 
+  private def getAuthUser(request: RequestHeader): Option[TwitterUser] =
+    for {
+      id <- request.session.get("id")
+      secret <- request.session.get("secret")
+    } yield {
+      val twitter = new Twitter(id, secret)
+      twitter.user
+    }
+
   def index = Action { implicit request =>
-    request.session.get("id") match {
-      case Some(id) =>
-        Ok(Jade.render("index.jade", Map("isLoggedIn" -> true, "id" -> Some(id))))
+    getAuthUser(request) match {
+      case Some(user) =>
+        Ok(
+          Jade.render("index.jade",
+            Map("isLoggedIn" -> true,
+              "screenName" -> Some(user.screenName)
+            )
+          )
+        )
       case None =>
-        Ok(Jade.render("index.jade", Map("isLoggedIn" -> false, "id" -> None)))
+        Ok(
+          Jade.render("index.jade",
+            Map(
+              "isLoggedIn" -> false,
+              "screenName" -> None
+            )
+          )
+        )
     }
   }
 
   def login = Action { implicit request =>
-    request.session.get("id") match {
+    getAuthUser(request) match {
       case Some(_) => Redirect(routes.Application.index)
       case None => oauth.retrieveRequestToken(oauthCallbackURL) match {
         case Right(token) =>
@@ -61,12 +83,11 @@ object Application extends Controller {
           val requestToken = RequestToken(oauthToken, tokenSecret)
           oauth.retrieveAccessToken(requestToken, oauthVerifier) match {
             case Right(token) =>
-              Logger.info(token.toString)
               Redirect(routes.Application.index).withSession(
-                "id" -> token.token
+                "id" -> token.token,
+                "secret" -> token.secret
               )
             case Left(e) =>
-              Logger.error(e.getMessage)
               BadRequest
           }
         case None => BadRequest
