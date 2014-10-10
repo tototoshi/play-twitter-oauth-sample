@@ -34,12 +34,33 @@ object Application extends Controller {
       case Some(_) => Ok(views.html.index("Your new application is ready."))
       case None => oauth.retrieveRequestToken(oauthCallbackURL) match {
         case Right(token) =>
-          Redirect(oauth.redirectUrl(token.token))
+          Redirect(oauth.redirectUrl(token.token)).withSession(
+            "twitter.requestTokenSecret" -> token.secret
+          )
         case Left(e) => {
           InternalServerError(e.getMessage)
         }
       }
     }
   }
+
+  def authorize(oauthToken: String, oauthVerifier: String) =
+    Action { implicit request =>
+      request.session.get("twitter.requestTokenSecret") match {
+        case Some(tokenSecret) =>
+          val requestToken = RequestToken(oauthToken, tokenSecret)
+          oauth.retrieveAccessToken(requestToken, oauthVerifier) match {
+            case Right(token) =>
+              Logger.info(token.toString)
+              Redirect(routes.Application.index).withSession(
+                "id" -> token.token
+              )
+            case Left(e) =>
+              Logger.error(e.getMessage)
+              BadRequest
+          }
+        case None => BadRequest
+      }
+    }
 
 }
